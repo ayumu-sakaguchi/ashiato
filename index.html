@@ -170,7 +170,6 @@
   .toast.show{opacity:1;}
 
   #print-frame{display:none;}
-  .clinic-badge{display:inline-flex;align-items:center;gap:3px;font-size:12px;font-weight:600;color:var(--accent-dark);background:var(--accent-light);border:1.5px solid var(--accent);border-radius:10px;padding:3px 8px;line-height:1.4;}
   @media print{
     body > *{ display:none!important; }
   }
@@ -1179,29 +1178,9 @@ function dismissClinicBanner() {
 }
 
 function updateClinicIconOnRecord() {
-  var d = getClinicDate();
+  // 通院日バッジは非表示
   var existing = document.getElementById('clinic-icon');
   if (existing) existing.parentNode.removeChild(existing);
-  if (!d) return;
-  var editDate = document.getElementById('record-date').value || todayStr();
-  if (editDate === d) {
-    var span = document.createElement('span');
-    span.id = 'clinic-icon';
-    span.className = 'clinic-badge';
-    span.textContent = '🏥 通院日';
-    // 日付の2行目（月日行）の右横に追加
-    var label = document.getElementById('today-label');
-    // 2行目のdivを探して横並びにする
-    var dayDiv = label.querySelector('div:last-child');
-    if (dayDiv) {
-      dayDiv.style.display = 'flex';
-      dayDiv.style.alignItems = 'center';
-      dayDiv.style.gap = '6px';
-      dayDiv.appendChild(span);
-    } else {
-      label.appendChild(span);
-    }
-  }
 }
 
 init();
