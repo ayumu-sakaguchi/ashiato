@@ -361,6 +361,18 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- 印刷確認オーバーレイ -->
+<div id="print-overlay" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.45);align-items:center;justify-content:center;">
+  <div style="background:var(--surface);border-radius:var(--radius);padding:24px;margin:24px;width:calc(100% - 48px);max-width:320px;box-shadow:var(--shadow);">
+    <div style="font-size:15px;font-weight:600;margin-bottom:8px;">印刷の確認</div>
+    <div style="font-size:13px;color:var(--text-sub);margin-bottom:20px;line-height:1.6;">印刷ダイアログを開きます。<br>このままの画面を印刷するか、PDFとして保存してください。</div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button id="print-cancel-btn" style="padding:10px 20px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;">キャンセル</button>
+      <button id="print-execute-btn" style="padding:10px 20px;border-radius:20px;border:none;background:var(--accent);color:white;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;">印刷する</button>
+    </div>
+  </div>
+</div>
+
 <!-- CONFIRM DIALOG -->
 <div id="confirm-overlay" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.45);align-items:center;justify-content:center;">
   <div style="background:var(--surface);border-radius:var(--radius);padding:24px;margin:24px;width:calc(100% - 48px);max-width:320px;box-shadow:var(--shadow);">
@@ -856,11 +868,24 @@ function printReport() {
     '<div class="pf-card">' + statsHtml + '</div>' +
     '<div class="pf-card"><div class="pf-card-title">生活習慣の達成率</div>' + habitHtml + '</div>';
   document.body.appendChild(div);
-  window.print();
-  setTimeout(function() {
+
+  // GitHubなど自動print禁止環境向け: ユーザー操作で印刷ダイアログを起動
+  var printBtn = document.getElementById('print-execute-btn');
+  var overlay = document.getElementById('print-overlay');
+  overlay.style.display = 'flex';
+  printBtn.onclick = function() {
+    overlay.style.display = 'none';
+    window.print();
+    setTimeout(function() {
+      var el = document.getElementById('print-frame');
+      if (el) el.parentNode.removeChild(el);
+    }, 1000);
+  };
+  document.getElementById('print-cancel-btn').onclick = function() {
+    overlay.style.display = 'none';
     var el = document.getElementById('print-frame');
     if (el) el.parentNode.removeChild(el);
-  }, 1000);
+  };
 }
 
 function showToast(msg) {
