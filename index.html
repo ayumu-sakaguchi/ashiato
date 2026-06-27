@@ -860,12 +860,7 @@ function executePrint() {
     || window.matchMedia('(display-mode: standalone)').matches;
 
   if (isStandalone) {
-    // ホーム画面アプリ: Safariで印刷ページを開く（window.print()制限を回避）
-    // ?printモードとしてSafariで同URLを開く
-    var printUrl = location.href.split('?')[0] + '?print=1';
-    location.href = 'x-web-search://?q=' + encodeURIComponent(''); // ダミー（使わない）
-    // iOSではsafari-extensionやschemeが使えないため、
-    // ユーザーにSafariで開くよう案内する
+    // ホーム画面アプリ: Safariで開く案内を表示
     showPrintGuide();
   } else {
     // ブラウザ: 別タブで印刷ページを開く
@@ -909,21 +904,39 @@ function buildPrintHTML(body) {
 }
 
 function showPrintGuide() {
-  // スタンドアロンモード用: Safariで開く手順を案内するオーバーレイ
   var ov = document.createElement('div');
   ov.id = 'print-guide-overlay';
   ov.style.cssText = 'position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.55);display:flex;align-items:flex-end;';
-  ov.innerHTML = '<div style="background:var(--surface);border-radius:20px 20px 0 0;padding:28px 24px 40px;width:100%;max-width:480px;margin:0 auto;">'
-    + '<div style="font-size:16px;font-weight:700;margin-bottom:12px;">Safariで印刷する</div>'
-    + '<div style="font-size:14px;color:var(--text-sub);line-height:1.8;margin-bottom:20px;">'
-    + 'ホーム画面アプリからは直接印刷できません。<br>'
-    + '以下の手順でSafariから印刷してください。<br><br>'
-    + '① 下の「Safariで開く」をタップ<br>'
-    + '② 開いたページの「印刷 / PDFで保存」をタップ'
-    + '</div>'
-    + '<button onclick="openInSafari()" style="width:100%;padding:14px;background:var(--accent);color:white;border:none;border-radius:var(--radius);font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;margin-bottom:10px;">Safariで開く</button>'
-    + '<button onclick="document.getElementById('print-guide-overlay').remove()" style="width:100%;padding:14px;background:var(--surface2);color:var(--text-sub);border:1.5px solid var(--border);border-radius:var(--radius);font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;">キャンセル</button>'
-    + '</div>';
+
+  var inner = document.createElement('div');
+  inner.style.cssText = 'background:var(--surface);border-radius:20px 20px 0 0;padding:28px 24px 40px;width:100%;max-width:480px;margin:0 auto;';
+
+  var title = document.createElement('div');
+  title.style.cssText = 'font-size:16px;font-weight:700;margin-bottom:12px;';
+  title.textContent = 'Safariで印刷する';
+
+  var desc = document.createElement('div');
+  desc.style.cssText = 'font-size:14px;color:var(--text-sub);line-height:1.8;margin-bottom:20px;';
+  desc.innerHTML = 'ホーム画面アプリからは直接印刷できません。<br>以下の手順でSafariから印刷してください。<br><br>① 下の「Safariで開く」をタップ<br>② 開いたページの「印刷 / PDFで保存」をタップ';
+
+  var btnOpen = document.createElement('button');
+  btnOpen.style.cssText = 'width:100%;padding:14px;background:var(--accent);color:white;border:none;border-radius:var(--radius);font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;margin-bottom:10px;display:block;';
+  btnOpen.textContent = 'Safariで開く';
+  btnOpen.onclick = openInSafari;
+
+  var btnCancel = document.createElement('button');
+  btnCancel.style.cssText = 'width:100%;padding:14px;background:var(--surface2);color:var(--text-sub);border:1.5px solid var(--border);border-radius:var(--radius);font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;display:block;';
+  btnCancel.textContent = 'キャンセル';
+  btnCancel.onclick = function() {
+    var el = document.getElementById('print-guide-overlay');
+    if (el) el.parentNode.removeChild(el);
+  };
+
+  inner.appendChild(title);
+  inner.appendChild(desc);
+  inner.appendChild(btnOpen);
+  inner.appendChild(btnCancel);
+  ov.appendChild(inner);
   document.body.appendChild(ov);
 }
 
