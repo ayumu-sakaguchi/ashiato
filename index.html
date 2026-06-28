@@ -1353,16 +1353,22 @@ async function authSignup() {
   setAuthLoading(true);
   try {
     var result = await supabase.auth.signUp({ email: email, password: password });
-    if (result.error) { showAuthError('登録に失敗しました: ' + result.error.message); setAuthLoading(false); return; }
-    if (result.data.user && result.data.session) {
-      currentUser = result.data.user;
-      await onLoginSuccess();
+    console.log('signUp result:', JSON.stringify(result));
+    if (result.error) { showAuthError('登録失敗: ' + result.error.message + ' (status:' + result.error.status + ')'); setAuthLoading(false); return; }
+    if (result.data && result.data.user) {
+      if (result.data.session) {
+        currentUser = result.data.user;
+        await onLoginSuccess();
+      } else {
+        showAuthError('確認メールを送信しました。メールを確認してからログインしてください。');
+        setAuthLoading(false);
+      }
     } else {
-      showAuthError('確認メールを送信しました。メールを確認してからログインしてください。');
+      showAuthError('予期しないレスポンス: ' + JSON.stringify(result.data));
       setAuthLoading(false);
     }
   } catch(e) {
-    showAuthError('エラーが発生しました');
+    showAuthError('例外エラー: ' + e.message + ' / ' + e.toString());
     setAuthLoading(false);
   }
 }
