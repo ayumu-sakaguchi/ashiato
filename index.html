@@ -493,6 +493,7 @@ function init() {
   loadEntryForDate(editingDate);
   renderHistory();
   renderGraph();
+  initPremium();
   updatePinSettingsUI();
   updateClinicSettingsUI();
   if (getPin()) showLockScreen('unlock');
@@ -560,19 +561,27 @@ function buildHabitList() {
       el.className = 'habit-simple';
       el.dataset.key = h.key;
       el.innerHTML = '<div class="habit-check"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="2 6 5 9 10 3"/></svg></div><span class="habit-name">' + h.label + '</span>';
-      el.onclick = function() { toggleSimple(h.key, el); };
+      el.onclick = (function(key, elem){ return function(){ toggleSimple(key, elem); }; })(h.key, el);
       list.appendChild(el);
     } else {
-      var el2 = document.createElement('div');
-      el2.className = 'habit-dual';
       var b1 = h.btn1 || '自分で';
       var b2 = h.btn2 || '介助あり';
-      el2.innerHTML = '<div class="habit-dual-top"><span class="habit-dual-name">' + h.label + '</span><div class="habit-dual-btns"><button class="dual-btn" data-key="' + h.key + '" data-val="self" onclick="selectDual(\'' + h.key + '\',\'self\',this)">' + b1 + '</button><button class="dual-btn" data-key="' + h.key + '" data-val="assist" onclick="selectDual(\'' + h.key + '\',\'assist\',this)">' + b2 + '</button></div></div>';
+      var el2 = document.createElement('div');
+      el2.className = 'habit-dual';
+      var top = document.createElement('div'); top.className = 'habit-dual-top';
+      var nameSpan = document.createElement('span'); nameSpan.className = 'habit-dual-name'; nameSpan.textContent = h.label;
+      var btnsDiv = document.createElement('div'); btnsDiv.className = 'habit-dual-btns';
+      var btn1El = document.createElement('button'); btn1El.className = 'dual-btn'; btn1El.dataset.key = h.key; btn1El.dataset.val = 'self'; btn1El.textContent = b1;
+      var btn2El = document.createElement('button'); btn2El.className = 'dual-btn'; btn2El.dataset.key = h.key; btn2El.dataset.val = 'assist'; btn2El.textContent = b2;
+      btn1El.onclick = (function(k, b){ return function(){ selectDual(k, 'self', b); }; })(h.key, btn1El);
+      btn2El.onclick = (function(k, b){ return function(){ selectDual(k, 'assist', b); }; })(h.key, btn2El);
+      btnsDiv.appendChild(btn1El); btnsDiv.appendChild(btn2El);
+      top.appendChild(nameSpan); top.appendChild(btnsDiv);
+      el2.appendChild(top);
       list.appendChild(el2);
     }
   });
 }
-
 function buildTagGrid() {
   var grid = document.getElementById('tag-grid');
   TAGS.forEach(function(t) {
@@ -662,31 +671,18 @@ function renderHistory() {
     return;
   }
   var scoreEmoji = ['','😞','😕','😐','🙂','😊'];
-  list.innerHTML = entries.map(function(e) {
+  list.innerHTML = '';
+  entries.forEach(function(e) {
     var tagsHtml = (e.tags && e.tags.length) ? '<div class="history-tags">' + e.tags.map(function(t){ return '<span class="history-tag">' + t + '</span>'; }).join('') + '</div>' : '';
     var memoHtml = e.memo ? '<div class="history-note">' + e.memo + '</div>' : '';
     var scoreHtml = e.score ? scoreEmoji[e.score] : '―';
-    return '<div class="history-entry" onclick="openEntryEdit(\'' + e.date + '\')">' +
-      '<div class="history-entry-header"><span class="history-date">' + fmtDate(e.date) + '</span><span class="history-score">' + scoreHtml + '</span></div>' +
-      tagsHtml + memoHtml + '</div>';
-  }).join('');
+    var div = document.createElement('div');
+    div.className = 'history-entry';
+    div.innerHTML = '<div class="history-entry-header"><span class="history-date">' + fmtDate(e.date) + '</span><span class="history-score">' + scoreHtml + '</span></div>' + tagsHtml + memoHtml;
+    div.onclick = (function(d){ return function(){ openEntryEdit(d); }; })(e.date);
+    list.appendChild(div);
+  });
 }
-
-function openEntryEdit(dateStr) {
-  // Switch to record page and load that date
-  document.getElementById('record-date').value = dateStr;
-  editingDate = dateStr;
-  resetRecordForm();
-  loadEntryForDate(dateStr);
-  document.getElementById('today-label').innerHTML = fmtDateHTML(dateStr);
-  var navBtns = document.querySelectorAll('.nav-btn');
-  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
-  document.getElementById('page-record').classList.add('active');
-  navBtns.forEach(function(b) { b.classList.remove('active'); });
-  navBtns[0].classList.add('active');
-}
-
-// ===== GRAPH =====
 function setPeriod(p, btn) {
   currentPeriod = p;
   document.querySelectorAll('.period-btn').forEach(function(b) { b.classList.remove('active'); });
@@ -933,6 +929,149 @@ function showConfirm(msg, onOk) {
 function closePrintOverlay() {
   document.getElementById('print-overlay').style.display = 'none';
 }
+function printReport() {
+  document.getElementById('print-overlay').style.display = 'flex';
+}
+function buildPrintHTML(imgData, statsHtml, habitHtml) {
+  return '<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><style>'
+    + '@page{size:A4 portrait;margin:12mm;}'
+    + '*{box-sizing:border-box;margin:0;padding:0;}'
+    + 'body{font-family:Hiragino Sans,sans-serif;color:#2D2A26;background:white;}'
+    + 'h2{font-size:14px;font-weight:700;margin-bottom:8px;}'
+    + '.card{border:1px solid #ccc;border-radius:6px;padding:8px 10px;margin-bottom:8px;}'
+    + '.card-title{font-size:8px;font-weight:600;color:#7A746C;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;}'
+    + '.stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:6px;}'
+    + '.stat-box{background:#F0EDE8;border-radius:5px;padding:6px;text-align:center;}'
+    + '.stat-val{font-size:15px;font-weight:700;color:#7B9E87;}'
+    + '.stat-lbl{font-size:8px;color:#7A746C;margin-top:1px;}'
+    + '.habit-stat-list{display:flex;flex-direction:column;gap:4px;}'
+    + '.habit-stat-row{display:flex;align-items:center;gap:8px;}'
+    + '.habit-stat-label{font-size:9px;width:95px;flex-shrink:0;}'
+    + '.habit-stat-bar-wrap{flex:1;background:#F0EDE8;border-radius:3px;height:7px;overflow:hidden;}'
+    + '.habit-stat-bar{height:100%;background:#7B9E87;border-radius:3px;}'
+    + '.habit-stat-bar.assist{background:#D4A840;}'
+    + '.habit-stat-pct{font-size:9px;font-weight:700;color:#4E7258;width:30px;text-align:right;flex-shrink:0;}'
+    + 'img{width:100%;display:block;border-radius:4px;}'
+    + '.print-btn-wrap{margin-top:16px;text-align:center;}'
+    + '.print-btn{padding:12px 32px;background:#7B9E87;color:white;border:none;border-radius:20px;font-size:15px;font-weight:700;cursor:pointer;}'
+    + '@media print{.print-btn-wrap{display:none;}}'
+    + '</style></head><body>'
+    + '<h2>振り返り</h2>'
+    + '<div class="card"><div class="card-title">気分スコア</div><img src="' + imgData + '"></div>'
+    + '<div class="card">' + statsHtml + '</div>'
+    + '<div class="card"><div class="card-title">生活習慣の達成率</div>' + habitHtml + '</div>'
+    + '<div class="print-btn-wrap"><button class="print-btn" onclick="window.print()">印刷 / PDFで保存</button></div>'
+    + '</body></html>';
+}
+function executePrint() {
+  document.getElementById('print-overlay').style.display = 'none';
+  try {
+    var canvas = document.getElementById('score-chart');
+    var imgData = canvas.toDataURL('image/png');
+    var statsHtml = document.getElementById('stats-row').outerHTML;
+    var habitHtml = document.getElementById('habit-stat-list').outerHTML;
+    var html = buildPrintHTML(imgData, statsHtml, habitHtml);
+    var isStandalone = window.navigator.standalone === true
+      || window.matchMedia('(display-mode: standalone)').matches;
+    if (isStandalone) {
+      localStorage.setItem('ashiato_print_body', html);
+      showPrintGuide();
+      return;
+    }
+    var blob = new Blob([html], {type: 'text/html'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.target = '_blank'; a.rel = 'noopener';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 15000);
+  } catch(e) {
+    showToast('印刷はGitHub版でご利用ください');
+  }
+}
+function showPage(id, btn) {
+  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  if (id === 'graph') setTimeout(renderGraph, 50);
+  if (id === 'record') {
+    // Reset to today when navigating to record tab normally
+    document.getElementById('record-date').value = todayStr();
+    editingDate = todayStr();
+    resetRecordForm();
+    loadEntryForDate(todayStr());
+    document.getElementById('today-label').innerHTML = fmtDateHTML(todayStr());
+  }
+}
+
+function showAddToHomeGuide() {
+  var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  var isAndroid = /android/i.test(navigator.userAgent);
+  var isStandalone = window.navigator.standalone === true
+    || window.matchMedia('(display-mode: standalone)').matches;
+
+  var ov = document.createElement('div');
+  ov.id = 'add-home-overlay';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.55);display:flex;align-items:flex-end;';
+
+  var inner = document.createElement('div');
+  inner.style.cssText = 'background:var(--surface);border-radius:20px 20px 0 0;padding:24px 20px 40px;width:100%;max-width:480px;margin:0 auto;';
+
+  var title = document.createElement('div');
+  title.style.cssText = 'font-size:16px;font-weight:700;margin-bottom:16px;';
+  title.textContent = 'ホーム画面に追加する';
+
+  var desc = document.createElement('div');
+  desc.style.cssText = 'font-size:14px;line-height:1.9;color:var(--text);margin-bottom:20px;';
+
+  if (isStandalone) {
+    desc.textContent = 'すでにホーム画面から起動しています。';
+  } else if (isIOS) {
+    desc.innerHTML =
+      '① 画面下部の <strong>共有ボタン（□↑）</strong> をタップ<br>' +
+      '② 「<strong>ホーム画面に追加</strong>」をタップ<br>' +
+      '③ 右上の「<strong>追加</strong>」をタップ';
+  } else if (isAndroid) {
+    desc.innerHTML =
+      '① ブラウザ右上の <strong>メニュー（⋮）</strong> をタップ<br>' +
+      '② 「<strong>ホーム画面に追加</strong>」をタップ<br>' +
+      '③ 「<strong>追加</strong>」をタップ';
+  } else {
+    desc.innerHTML =
+      'ブラウザのメニューから<br>「<strong>ホーム画面に追加</strong>」または<br>「<strong>サイトをアプリとしてインストール</strong>」を選んでください。';
+  }
+
+  var btnClose = document.createElement('button');
+  btnClose.style.cssText = 'width:100%;padding:14px;background:var(--accent);color:white;border:none;border-radius:var(--radius);font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;';
+  btnClose.textContent = '閉じる';
+  btnClose.onclick = function() {
+    var el = document.getElementById('add-home-overlay');
+    if (el) el.parentNode.removeChild(el);
+  };
+
+  inner.appendChild(title);
+  inner.appendChild(desc);
+  inner.appendChild(btnClose);
+  ov.appendChild(inner);
+  document.body.appendChild(ov);
+}
+
+function showConfirm(msg, onOk) {
+  document.getElementById('confirm-msg').textContent = msg;
+  document.getElementById('confirm-overlay').style.display = 'flex';
+  document.getElementById('confirm-overlay').style.alignItems = 'center';
+  document.getElementById('confirm-ok').onclick = function() {
+    document.getElementById('confirm-overlay').style.display = 'none';
+    onOk();
+  };
+  document.getElementById('confirm-cancel').onclick = function() {
+    document.getElementById('confirm-overlay').style.display = 'none';
+  };
+}
+
+function closePrintOverlay() {
+  document.getElementById('print-overlay').style.display = 'none';
+}
 
 function executePrint() {
   document.getElementById('print-overlay').style.display = 'none';
@@ -963,8 +1102,9 @@ function executePrint() {
     var html = buildPrintHTML(printBody);
     var blob = new Blob([html], {type: 'text/html'});
     var url = URL.createObjectURL(blob);
-    var win = window.open(url, '_blank');
-    if (!win) { location.href = url; }
+    var a = document.createElement('a');
+    a.href = url; a.target = '_blank'; a.rel = 'noopener';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(function(){ URL.revokeObjectURL(url); }, 15000);
   }
 }
@@ -1061,6 +1201,36 @@ function showToast(msg) {
   var t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
   setTimeout(function() { t.classList.remove('show'); }, 2000);
+}
+
+// ===== PREMIUM FLAG =====
+var isPremium = true;
+
+function getPremium() {
+  var v = localStorage.getItem('ashiato_premium');
+  return v === null ? true : v === 'true';
+}
+function togglePremium() {
+  isPremium = document.getElementById('premium-toggle').checked;
+  localStorage.setItem('ashiato_premium', String(isPremium));
+  var label = document.getElementById('premium-status-label');
+  label.textContent = isPremium ? '有効' : '無効（フリープラン）';
+  var knob = document.getElementById('premium-knob');
+  var slider = document.getElementById('premium-slider');
+  knob.style.left = isPremium ? '23px' : '3px';
+  slider.style.background = isPremium ? 'var(--accent)' : 'var(--border)';
+  showToast(isPremium ? 'プレミアム有効' : 'フリープランに変更');
+}
+function initPremium() {
+  isPremium = getPremium();
+  var toggle = document.getElementById('premium-toggle');
+  var label = document.getElementById('premium-status-label');
+  var knob = document.getElementById('premium-knob');
+  var slider = document.getElementById('premium-slider');
+  toggle.checked = isPremium;
+  label.textContent = isPremium ? '有効' : '無効（フリープラン）';
+  knob.style.left = isPremium ? '23px' : '3px';
+  slider.style.background = isPremium ? 'var(--accent)' : 'var(--border)';
 }
 
 // ===== PIN LOCK =====
