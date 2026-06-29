@@ -1329,7 +1329,13 @@ function initSupabase() {
   } catch(e) {
     debugLines.push('EXCEPTION: ' + e.message);
   }
-  alert(debugLines.join(' | '));
+  var msg = debugLines.join(' | ');
+  document.title = msg;
+  // タイトルバーに表示 + bodyの一番上にも表示
+  var dbgDiv = document.createElement('div');
+  dbgDiv.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:red;color:white;font-size:12px;padding:8px;word-break:break-all;';
+  dbgDiv.textContent = msg;
+  document.body.appendChild(dbgDiv);
 }
 
 // ===== AUTH =====
