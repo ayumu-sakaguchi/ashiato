@@ -1392,12 +1392,14 @@ async function authLogout() {
 async function onLoginSuccess() {
   hideAuthScreen();
   setAuthLoading(false);
-  document.getElementById('auth-user-email').textContent = currentUser.email;
+  var emailEl = document.getElementById('auth-user-email');
+  if (emailEl) emailEl.textContent = currentUser.email;
   showToast('ログインしました');
-  // Supabaseからデータを読み込む
   await loadEntriesFromSupabase();
   renderHistory();
   renderGraph();
+  if (!getPin()) { checkClinicBanner(); updateClinicIconOnRecord(); }
+  if (getPin()) { showLockScreen('unlock'); }
 }
 
 // ===== PREMIUM FLAG =====
