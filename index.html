@@ -1633,11 +1633,14 @@ function updateClinicIconOnRecord() {
 // ===== STARTUP =====
 async function startup() {
   init();
-  // SDKが完全に読み込まれるまで待つ
-  var maxWait = 50; // 最大5秒
+  // SDKが完全に読み込まれるまで待つ（最大5秒）
+  var maxWait = 50;
   var waited = 0;
   while (waited < maxWait) {
-    if (typeof window.supabase !== 'undefined' && typeof window.supabase.createClient === 'function') break;
+    try {
+      if (typeof window.supabase !== 'undefined' && window.supabase && typeof window.supabase.createClient === 'function') break;
+      if (typeof createClient === 'function') break;
+    } catch(e) {}
     await new Promise(function(r){ setTimeout(r, 100); });
     waited++;
   }
