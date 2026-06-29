@@ -1333,7 +1333,6 @@ function setAuthLoading(flag) {
 }
 
 async function authLogin() {
-  showAuthError('authLogin called, supabase=' + (supabase ? 'OK' : 'NULL'));
   if (!supabase) { showAuthError('接続エラー: Supabaseが初期化されていません。ページを再読み込みしてください。'); return; }
   var email = document.getElementById('auth-email').value.trim();
   var password = document.getElementById('auth-password').value;
@@ -1393,14 +1392,13 @@ async function authLogout() {
 async function onLoginSuccess() {
   hideAuthScreen();
   setAuthLoading(false);
-  var emailEl = document.getElementById('auth-user-email');
-  if (emailEl) emailEl.textContent = currentUser.email;
+  var _elEmail = document.getElementById('auth-user-email');
+  if (_elEmail) _elEmail.textContent = currentUser.email;
   showToast('ログインしました');
+  // Supabaseからデータを読み込む
   await loadEntriesFromSupabase();
   renderHistory();
   renderGraph();
-  if (!getPin()) { checkClinicBanner(); updateClinicIconOnRecord(); }
-  if (getPin()) { showLockScreen('unlock'); }
 }
 
 // ===== PREMIUM FLAG =====
@@ -1630,30 +1628,13 @@ async function startup() {
     waited++;
   }
   initSupabase();
-  if (!supabase) {
-    if (!getPin()) { checkClinicBanner(); updateClinicIconOnRecord(); }
-    if (getPin()) { showLockScreen('unlock'); }
-    return;
-  }
-  // セッション変化を監視（ページ更新後もログイン状態を維持）
-  supabase.auth.onAuthStateChange(async function(event, session) {
-    if (event === 'SIGNED_IN' && session && !currentUser) {
-      currentUser = session.user;
-      var emailEl = document.getElementById('auth-user-email');
-      if (emailEl) emailEl.textContent = currentUser.email;
-    } else if (event === 'SIGNED_OUT') {
-      currentUser = null;
-      showAuthScreen();
-    }
-  });
 
   try {
     var sessionResult = await supabase.auth.getSession();
     var session = sessionResult.data && sessionResult.data.session;
     if (session && session.user) {
       currentUser = session.user;
-      var emailEl = document.getElementById('auth-user-email');
-      if (emailEl) emailEl.textContent = currentUser.email;
+      var _el = document.getElementById('auth-user-email'); if (_el) _el.textContent = currentUser.email;
       await loadEntriesFromSupabase();
       renderHistory();
       renderGraph();
