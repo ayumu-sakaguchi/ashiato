@@ -1333,6 +1333,7 @@ function setAuthLoading(flag) {
 }
 
 async function authLogin() {
+  showAuthError('authLogin called, supabase=' + (supabase ? 'OK' : 'NULL'));
   if (!supabase) { showAuthError('接続エラー: Supabaseが初期化されていません。ページを再読み込みしてください。'); return; }
   var email = document.getElementById('auth-email').value.trim();
   var password = document.getElementById('auth-password').value;
