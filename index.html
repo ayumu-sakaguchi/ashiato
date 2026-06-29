@@ -1458,10 +1458,10 @@ function initPremium() {
   var label = document.getElementById('premium-status-label');
   var knob = document.getElementById('premium-knob');
   var slider = document.getElementById('premium-slider');
-  toggle.checked = isPremium;
-  label.textContent = isPremium ? '有効' : '無効（フリープラン）';
-  knob.style.left = isPremium ? '23px' : '3px';
-  slider.style.background = isPremium ? 'var(--accent)' : 'var(--border)';
+  if (toggle) toggle.checked = isPremium;
+  if (label) label.textContent = isPremium ? '有効' : '無効（フリープラン）';
+  if (knob) knob.style.left = isPremium ? '23px' : '3px';
+  if (slider) slider.style.background = isPremium ? 'var(--accent)' : 'var(--border)';
 }
 
 // ===== PIN LOCK =====
