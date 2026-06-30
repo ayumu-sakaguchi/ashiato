@@ -269,6 +269,10 @@ window._supabaseCreateClient = createClient;
       </div>
     </div>
   </div>
+  <div id="clinic-info-bar" style="display:none;align-items:center;justify-content:space-between;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;margin-bottom:14px;font-size:12px;color:var(--text-sub);">
+    <span id="clinic-info-text"></span>
+    <button onclick="dismissClinicInfoBar()" style="background:none;border:none;color:var(--text-sub);font-size:16px;cursor:pointer;line-height:1;padding:0 0 0 8px;flex-shrink:0;">×</button>
+  </div>
   <div class="card">
     <div class="card-title">今日の気分</div>
     <div class="score-row">
@@ -371,26 +375,25 @@ window._supabaseCreateClient = createClient;
   </div>
   <div class="card">
     <div class="setting-label">通院日</div>
-    <div class="setting-row">
+    <div class="setting-row" style="border:none;">
       <div>
         <div class="setting-row-label">次の通院日</div>
         <div class="setting-row-sub" id="clinic-date-label">設定されていません</div>
       </div>
-
     </div>
-    <div id="clinic-picker-row" style="padding:8px 0 4px;">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+    <div style="padding:8px 0 4px;">
+      <div style="display:flex;align-items:center;gap:8px;">
         <input type="date" id="clinic-date-input" style="flex:1;min-width:0;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text);font-family:inherit;font-size:14px;outline:none;">
         <button onclick="confirmClinicDate()" style="padding:8px 16px;background:var(--accent);color:white;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap;flex-shrink:0;">決定</button>
       </div>
     </div>
-    <div class="setting-row" id="clinic-remove-row" style="display:none">
+    <div class="setting-row" id="clinic-remove-row" style="display:none;border:none;">
       <div>
         <div class="setting-row-label">通院日を削除</div>
       </div>
       <button class="text-btn danger" onclick="removeClinicDate()">削除する</button>
     </div>
-
+  </div>
   </div>
   <div class="card">
     <div class="setting-label">セキュリティ</div>
@@ -513,6 +516,12 @@ function fmtDate(str) {
   var days = ['日','月','火','水','木','金','土'];
   var dow = days[new Date(str).getDay()];
   return p[0] + '年' + Number(p[1]) + '月' + Number(p[2]) + '日（' + dow + '）';
+}
+function fmtDateHalf(str) {
+  var p = str.split('-');
+  var days = ['日','月','火','水','木','金','土'];
+  var dow = days[new Date(str).getDay()];
+  return p[0] + '年' + Number(p[1]) + '月' + Number(p[2]) + '日(' + dow + ')';
 }
 
 function fmtDateHTML(str) {
@@ -1533,10 +1542,10 @@ function updatePinSettingsUI() {
 function getClinicDate() { return localStorage.getItem('ashiato_clinic_date') || ''; }
 
 function confirmClinicDate() {
-  var d = document.getElementById('clinic-date-input').value;
+  var input = document.getElementById('clinic-date-input');
+  var d = input.value;
   if (!d) { showToast('日付を選択してください'); return; }
   localStorage.setItem('ashiato_clinic_date', d);
-  document.getElementById('clinic-picker-row').style.display = 'none';
   updateClinicSettingsUI();
   showToast('通院日を設定しました');
 }
@@ -1544,24 +1553,49 @@ function saveClinicDate() {
   // 後方互換のため残す（呼ばれない）
 }
 function removeClinicDate() {
-  localStorage.removeItem('ashiato_clinic_date');
-  updateClinicSettingsUI();
-  showToast('通院日を削除しました');
+  showConfirm('通院日を削除しますか？', function() {
+    localStorage.removeItem('ashiato_clinic_date');
+    updateClinicSettingsUI();
+    showToast('通院日を削除しました');
+  }, '削除する');
 }
 function updateClinicSettingsUI() {
   var d = getClinicDate();
   var label = document.getElementById('clinic-date-label');
   var removeRow = document.getElementById('clinic-remove-row');
-  var actionBtn = document.querySelector('#clinic-remove-row ~ * .text-btn, .setting-row .text-btn');
   var input = document.getElementById('clinic-date-input');
   if (d) {
-    label.textContent = fmtDate(d);
-    removeRow.style.display = '';
+    if (label) label.textContent = fmtDate(d);
+    if (removeRow) removeRow.style.display = '';
     if (input) input.value = d;
   } else {
-    label.textContent = '設定されていません';
-    removeRow.style.display = 'none';
+    if (label) label.textContent = '設定されていません';
+    if (removeRow) removeRow.style.display = 'none';
+    if (input) input.value = '';
   }
+  updateClinicInfoBar();
+}
+function updateClinicInfoBar() {
+  var d = getClinicDate();
+  var bar = document.getElementById('clinic-info-bar');
+  var text = document.getElementById('clinic-info-text');
+  if (!bar || !text) return;
+  var dismissedValue = sessionStorage.getItem('clinic_info_bar_dismissed');
+  if (d) {
+    if (dismissedValue === 'set:' + d) { bar.style.display = 'none'; return; }
+    text.textContent = '通院予定日／' + fmtDateHalf(d);
+    bar.style.display = 'flex';
+  } else {
+    if (dismissedValue === 'unset') { bar.style.display = 'none'; return; }
+    text.textContent = '次の通院日を設定画面で登録してください';
+    bar.style.display = 'flex';
+  }
+}
+function dismissClinicInfoBar() {
+  var d = getClinicDate();
+  sessionStorage.setItem('clinic_info_bar_dismissed', d ? 'set:' + d : 'unset');
+  var bar = document.getElementById('clinic-info-bar');
+  if (bar) bar.style.display = 'none';
 }
 function checkClinicBanner() {
   var d = getClinicDate();
