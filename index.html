@@ -344,6 +344,16 @@ window._supabaseCreateClient = createClient;
 <div id="page-settings" class="page">
   <div class="page-header"><div class="page-title">設定</div></div>
   <div class="card">
+    <div class="setting-label">アカウント</div>
+    <div class="setting-row" style="border:none;">
+      <div>
+        <div class="setting-row-label">ログイン中</div>
+        <div class="setting-row-sub" id="auth-user-email">-</div>
+      </div>
+      <button class="text-btn danger" onclick="authLogout()">ログアウト</button>
+    </div>
+  </div>
+  <div class="card">
     <div class="setting-label">ホーム画面</div>
     <div class="setting-row" style="border:none;">
       <div>
