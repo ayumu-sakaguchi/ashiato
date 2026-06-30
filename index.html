@@ -450,8 +450,8 @@ window._supabaseCreateClient = createClient;
   <div style="background:var(--surface);border-radius:var(--radius);padding:24px;margin:24px;width:calc(100% - 48px);max-width:320px;box-shadow:var(--shadow);">
     <div id="confirm-msg" style="font-size:15px;font-weight:500;margin-bottom:20px;line-height:1.6;"></div>
     <div style="display:flex;gap:10px;justify-content:flex-end;">
-      <button id="confirm-cancel" style="padding:10px 20px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;">キャンセル</button>
-      <button id="confirm-ok" style="padding:10px 20px;border-radius:20px;border:none;background:#C04040;color:white;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;">削除する</button>
+      <button id="confirm-cancel" style="padding:10px 20px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap;">キャンセル</button>
+      <button id="confirm-ok" style="padding:10px 20px;border-radius:20px;border:none;background:#C04040;color:white;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap;">削除する</button>
     </div>
   </div>
 </div>
@@ -1385,7 +1385,7 @@ async function authLogout() {
     currentUser = null;
     showAuthScreen();
     showToast('ログアウトしました');
-  }, 'ログアウトする');
+  }, '実行');
 }
 
 async function onLoginSuccess() {
