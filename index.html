@@ -254,9 +254,9 @@ window._supabaseCreateClient = createClient;
 
 <!-- RECORD PAGE -->
 <div id="page-record" class="page active">
-  <div id="clinic-info-bar" style="display:none;align-items:center;justify-content:space-between;background:var(--surface2);border-bottom:1.5px solid var(--border);padding:6px 16px;font-size:12px;color:var(--text-sub);margin-bottom:0;">
+  <div id="clinic-info-bar" style="display:none;align-items:center;justify-content:center;position:relative;background:var(--surface2);border-bottom:1.5px solid var(--border);padding:6px 36px 6px 16px;font-size:12px;color:var(--text-sub);margin-bottom:0;text-align:center;">
     <span id="clinic-info-text"></span>
-    <button onclick="dismissClinicInfoBar()" style="background:none;border:none;color:var(--text-sub);font-size:16px;cursor:pointer;line-height:1;padding:0 0 0 8px;flex-shrink:0;">×</button>
+    <button onclick="dismissClinicInfoBar()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-sub);font-size:16px;cursor:pointer;line-height:1;padding:0;flex-shrink:0;">×</button>
   </div>
   <div class="page-header">
     <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;overflow:hidden;">
@@ -394,9 +394,7 @@ window._supabaseCreateClient = createClient;
       <button class="text-btn danger" onclick="removeClinicDate()">削除する</button>
     </div>
   </div>
-  </div>
   <div class="card">
-    <div class="setting-label">セキュリティ</div>
     <div class="setting-row">
       <div>
         <div class="setting-row-label">PINロック</div>
