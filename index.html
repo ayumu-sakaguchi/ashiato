@@ -1008,8 +1008,9 @@ function showAddToHomeGuide() {
   document.body.appendChild(ov);
 }
 
-function showConfirm(msg, onOk) {
+function showConfirm(msg, onOk, okLabel) {
   document.getElementById('confirm-msg').textContent = msg;
+  document.getElementById('confirm-ok').textContent = okLabel || '削除する';
   document.getElementById('confirm-overlay').style.display = 'flex';
   document.getElementById('confirm-overlay').style.alignItems = 'center';
   document.getElementById('confirm-ok').onclick = function() {
@@ -1151,18 +1152,6 @@ function showAddToHomeGuide() {
   document.body.appendChild(ov);
 }
 
-function showConfirm(msg, onOk) {
-  document.getElementById('confirm-msg').textContent = msg;
-  document.getElementById('confirm-overlay').style.display = 'flex';
-  document.getElementById('confirm-overlay').style.alignItems = 'center';
-  document.getElementById('confirm-ok').onclick = function() {
-    document.getElementById('confirm-overlay').style.display = 'none';
-    onOk();
-  };
-  document.getElementById('confirm-cancel').onclick = function() {
-    document.getElementById('confirm-overlay').style.display = 'none';
-  };
-}
 
 function closePrintOverlay() {
   document.getElementById('print-overlay').style.display = 'none';
@@ -1396,7 +1385,7 @@ async function authLogout() {
     currentUser = null;
     showAuthScreen();
     showToast('ログアウトしました');
-  });
+  }, 'ログアウトする');
 }
 
 async function onLoginSuccess() {
