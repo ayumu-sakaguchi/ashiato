@@ -1617,18 +1617,22 @@ function checkClinicBanner() {
       if (diff === 0) {
         bannerText.innerHTML = '本日は通院予定日です 🏥';
         banner.style.display = 'block'; banner.style.background = '#8B2035';
+        banner._twoLine = false;
         showingBanner = true;
       } else if (diff === 1) {
         bannerText.innerHTML = '明日／' + dateStr + 'は<br>通院予定日です 🏥';
         banner.style.display = 'block'; banner.style.background = 'var(--accent-dark)';
+        banner._twoLine = true;
         showingBanner = true;
       } else if (diff === 3) {
         bannerText.innerHTML = '3日後／' + dateStr + 'は<br>通院予定日です';
         banner.style.display = 'block'; banner.style.background = 'var(--accent)';
+        banner._twoLine = true;
         showingBanner = true;
       } else if (diff === 7) {
         bannerText.innerHTML = '7日後／' + dateStr + 'は<br>通院予定日です';
         banner.style.display = 'block'; banner.style.background = 'var(--accent)';
+        banner._twoLine = true;
         showingBanner = true;
       }
     }
@@ -1639,7 +1643,8 @@ function checkClinicBanner() {
     banner.style.lineHeight = '1.7';
     var infoBar = document.getElementById('clinic-info-bar');
     if (infoBar) infoBar.style.display = 'none';
-    document.querySelectorAll('.page').forEach(function(p){ p.style.paddingTop = '60px'; });
+    var pt = banner._twoLine ? '96px' : '76px';
+    document.querySelectorAll('.page').forEach(function(p){ p.style.paddingTop = pt; });
   } else {
     updateClinicInfoBar();
   }
